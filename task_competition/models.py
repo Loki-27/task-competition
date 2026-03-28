@@ -54,7 +54,7 @@ class User(UserMixin, db.Model):
 
 
 class Task(db.Model):
-    """Task model for Good Tasks and Bad Tasks."""
+    """Task model for Good Tasks, Bad Tasks, Weekly and Monthly Goals."""
     __tablename__ = 'tasks'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -62,10 +62,14 @@ class Task(db.Model):
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text)
     points = db.Column(db.Integer, nullable=False)  # Positive for good tasks, negative for bad tasks
-    task_type = db.Column(db.String(20), nullable=False)  # 'good' or 'bad'
+    task_type = db.Column(db.String(20), nullable=False, default='good')  # 'good' or 'bad'
+    category = db.Column(db.String(20), nullable=False, default='daily')  # 'daily', 'weekly', 'monthly'
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
     requires_verification = db.Column(db.Boolean, default=False)
+    order = db.Column(db.Integer, default=0)  # For task ordering
+    duration_minutes = db.Column(db.Integer, default=0)  # Timer duration (0 = no timer)
+    target = db.Column(db.Integer, default=0)  # Target count (0 = checkbox only)
     
     # Relationships
     completions = db.relationship('TaskCompletion', backref='task', lazy=True, cascade='all, delete-orphan')
@@ -94,6 +98,9 @@ class TaskCompletion(db.Model):
     is_verified = db.Column(db.Boolean, default=False)
     needs_verification = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    progress_count = db.Column(db.Integer, default=0)  # For goals with targets (e.g., 3 out of 7)
+    elapsed_seconds = db.Column(db.Integer, default=0)  # Time spent on timed tasks
+    completion_type = db.Column(db.String(20), default='full')  # 'full' or 'partial'
     
     __table_args__ = (
         db.UniqueConstraint('user_id', 'task_id', 'completed_at', name='unique_daily_completion'),
