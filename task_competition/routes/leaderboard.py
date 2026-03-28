@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template
 from flask_login import login_required
-from models import User, TaskCompletion, db
+from ..models import User, TaskCompletion, db
 from datetime import datetime
 
 leaderboard_bp = Blueprint('leaderboard', __name__, url_prefix='/leaderboard')

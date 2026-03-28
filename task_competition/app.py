@@ -1,14 +1,14 @@
 import os
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_login import LoginManager, current_user, login_required
-from models import db, User
-from config import config
+from .models import db, User
+from .config import config
 from datetime import datetime
 
 # Import route blueprints
-from routes.auth import auth_bp
-from routes.tasks import tasks_bp
-from routes.leaderboard import leaderboard_bp
+from .routes.auth import auth_bp
+from .routes.tasks import tasks_bp
+from .routes.leaderboard import leaderboard_bp
 
 def create_app(config_name=None):
     """Create and configure the Flask application."""

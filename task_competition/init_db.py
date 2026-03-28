@@ -3,8 +3,14 @@ Initialize the database with sample data for testing.
 Run this script to populate the database with test users and tasks.
 """
 
-from app import create_app
-from models import db, User, Task
+import sys
+import os
+
+# Add parent directory to path so task_competition can be imported
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from task_competition.app import create_app
+from task_competition.models import db, User, Task
 
 def init_db():
     """Initialize database with sample data."""

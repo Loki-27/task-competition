@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from datetime import datetime
-from models import db, Task, TaskCompletion, TaskVerification, User
+from ..models import db, Task, TaskCompletion, TaskVerification, User
 
 tasks_bp = Blueprint('tasks', __name__, url_prefix='/tasks')
 
