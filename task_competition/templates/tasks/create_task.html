@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Create Task - Daily Task Competition{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 offset-lg-2">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title"><i class="bi bi-plus-circle"></i> Create a New Task</h1>
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Task Title *</label>
+                        <input type="text" class="form-control" id="title" name="title" required 
+                               placeholder="e.g., Morning Jog, Skip Dessert">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" 
+                                  placeholder="Add details about this task (optional)"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="task_type" class="form-label">Task Type *</label>
+                                <select class="form-select" id="task_type" name="task_type" required>
+                                    <option value="">Select type...</option>
+                                    <option value="good">Good Task (Positive Points)</option>
+                                    <option value="bad">Bad Task (Penalty Points)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="points" class="form-label">Points *</label>
+                                <input type="number" class="form-control" id="points" name="points" required 
+                                       placeholder="e.g., 10" min="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="requires_verification" 
+                               name="requires_verification">
+                        <label class="form-check-label" for="requires_verification">
+                            Requires peer verification to earn points
+                        </label>
+                        <small class="d-block text-muted mt-2">
+                            When enabled, a friend must approve this task before you get the points.
+                        </small>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> Create Task
+                        </button>
+                        <a href="{{ url_for('tasks.dashboard') }}" class="btn btn-secondary btn-lg">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

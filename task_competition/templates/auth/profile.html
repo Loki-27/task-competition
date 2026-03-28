@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Daily Task Competition{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-6 offset-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title"><i class="bi bi-person-circle"></i> {{ current_user.display_name }}</h1>
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Total Points</h5>
+                                <h2 class="text-primary">{{ current_user.total_points }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Daily Points</h5>
+                                <h2 class="text-success">{{ daily_points }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Leaderboard Rank</h5>
+                                <h2 class="text-warning">#{{ rank }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Member Since</h5>
+                                <p class="card-text">{{ current_user.created_at.strftime('%B %d, %Y') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p><strong>Username:</strong> @{{ current_user.username }}</p>
+                    <p><strong>Email:</strong> {{ current_user.email }}</p>
+                </div>
+                <div class="mt-4">
+                    <a href="{{ url_for('tasks.dashboard') }}" class="btn btn-primary">
+                        <i class="bi bi-house"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

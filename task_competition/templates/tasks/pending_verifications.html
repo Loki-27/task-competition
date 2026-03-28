@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Tasks - Daily Task Competition{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 offset-lg-1">
+        <h1><i class="bi bi-check-circle"></i> Tasks Pending Verification</h1>
+        <p class="text-muted">Review and approve or reject tasks submitted by others</p>
+
+        {% if pending %}
+            <div class="row">
+                {% for completion in pending %}
+                    <div class="col-lg-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ completion.task.title }}</h5>
+                                {% if completion.task.description %}
+                                    <p class="card-text text-muted">{{ completion.task.description }}</p>
+                                {% endif %}
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <p class="mb-1"><small class="text-muted">Submitted by</small></p>
+                                        <p class="font-weight-bold">{{ completion.user.display_name }}</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <p class="mb-1"><small class="text-muted">Points at Stake</small></p>
+                                        {% if completion.task.points > 0 %}
+                                            <p class="font-weight-bold text-success">+{{ completion.task.points }}</p>
+                                        {% else %}
+                                            <p class="font-weight-bold text-danger">{{ completion.task.points }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <p class="text-muted small">
+                                    Submitted: {{ completion.completed_at.strftime('%Y-%m-%d %H:%M') }}
+                                </p>
+                            </div>
+                            <div class="card-footer bg-light d-flex gap-2">
+                                <form method="POST" action="{{ url_for('tasks.verify_task', completion_id=completion.id, action='approve') }}" class="flex-grow-1">
+                                    <button type="submit" class="btn btn-success w-100">
+                                        <i class="bi bi-check-circle"></i> Approve
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('tasks.verify_task', completion_id=completion.id, action='reject') }}" class="flex-grow-1">
+                                    <button type="submit" class="btn btn-danger w-100">
+                                        <i class="bi bi-x-circle"></i> Reject
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle"></i> No tasks pending verification right now. Check back later!
+            </div>
+        {% endif %}
+
+        <div class="mt-4">
+            <a href="{{ url_for('tasks.dashboard') }}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

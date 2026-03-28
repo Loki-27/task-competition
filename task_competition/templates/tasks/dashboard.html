@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Daily Task Competition{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Points</h5>
+                <h2>{{ total_points }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">Today's Points</h5>
+                <h2>{{ daily_points }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">Tasks Completed</h5>
+                <h2>{{ completed_task_ids|length }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Good Tasks</h5>
+            </div>
+            <div class="card-body">
+                {% if good_tasks %}
+                    <div class="list-group">
+                        {% for task in good_tasks %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ task.title }}</h6>
+                                        {% if task.description %}
+                                            <p class="text-muted small mb-2">{{ task.description }}</p>
+                                        {% endif %}
+                                        <span class="badge bg-success">+{{ task.points }} points</span>
+                                        {% if task.requires_verification %}
+                                            <span class="badge bg-warning">Requires Verification</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="ms-2">
+                                        {% if task.id in completed_task_ids %}
+                                            <form method="POST" action="{{ url_for('tasks.undo_task', task_id=task.id) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-x-circle"></i> Undo
+                                                </button>
+                                            </form>
+                                            <span class="badge bg-success ms-2">✓ Done</span>
+                                        {% else %}
+                                            <form method="POST" action="{{ url_for('tasks.complete_task', task_id=task.id) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    <i class="bi bi-check-circle"></i> Complete
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No good tasks available. Create one!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-exclamation-circle"></i> Bad Tasks</h5>
+            </div>
+            <div class="card-body">
+                {% if bad_tasks %}
+                    <div class="list-group">
+                        {% for task in bad_tasks %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ task.title }}</h6>
+                                        {% if task.description %}
+                                            <p class="text-muted small mb-2">{{ task.description }}</p>
+                                        {% endif %}
+                                        <span class="badge bg-danger">{{ task.points }} points</span>
+                                        {% if task.requires_verification %}
+                                            <span class="badge bg-warning">Requires Verification</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="ms-2">
+                                        {% if task.id in completed_task_ids %}
+                                            <form method="POST" action="{{ url_for('tasks.undo_task', task_id=task.id) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-x-circle"></i> Undo
+                                                </button>
+                                            </form>
+                                            <span class="badge bg-danger ms-2">✓ Done</span>
+                                        {% else %}
+                                            <form method="POST" action="{{ url_for('tasks.complete_task', task_id=task.id) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-danger">
+                                                    <i class="bi bi-check-circle"></i> Confirm
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No bad tasks available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <a href="{{ url_for('tasks.create_task') }}" class="btn btn-lg btn-primary">
+            <i class="bi bi-plus-circle"></i> Create New Task
+        </a>
+        <a href="{{ url_for('leaderboard.index') }}" class="btn btn-lg btn-warning">
+            <i class="bi bi-trophy"></i> View Leaderboard
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Leaderboard - Daily Task Competition{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1><i class="bi bi-trophy"></i> Leaderboard</h1>
+        <p class="text-muted">View current standings and daily rankings</p>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item">
+        <a class="nav-link active" id="all-tab" data-bs-toggle="tab" href="#all" role="tab">
+            <i class="bi bi-star"></i> All Time
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="daily-tab" data-bs-toggle="tab" href="#daily" role="tab">
+            <i class="bi bi-calendar"></i> Today
+        </a>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- All Time Leaderboard -->
+    <div class="tab-pane fade show active" id="all" role="tabpanel">
+        <div class="row">
+            <div class="col-lg-10 offset-lg-1">
+                {% if users %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="width: 80px;">Rank</th>
+                                    <th>Player</th>
+                                    <th style="width: 150px;">Points</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                    <tr {% if current_user.id == user.id %}class="table-primary"{% endif %}>
+                                        <td>
+                                            {% if loop.index == 1 %}
+                                                <span class="badge bg-warning">
+                                                    <i class="bi bi-trophy-fill"></i> 1st
+                                                </span>
+                                            {% elif loop.index == 2 %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-medal"></i> 2nd
+                                                </span>
+                                            {% elif loop.index == 3 %}
+                                                <span class="badge bg-warning">
+                                                    <i class="bi bi-award"></i> 3rd
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">#{{ loop.index }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('auth.profile') }}" class="text-decoration-none">
+                                                <strong>{{ user.display_name }}</strong>
+                                            </a>
+                                            {% if current_user.id == user.id %}
+                                                <span class="badge bg-info">You</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <h5 class="mb-0">
+                                                <span class="badge bg-primary">{{ user.total_points }}</span>
+                                            </h5>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">No users yet.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Leaderboard -->
+    <div class="tab-pane fade" id="daily" role="tabpanel">
+        <div class="row">
+            <div class="col-lg-10 offset-lg-1">
+                {% if daily_leaderboard %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="width: 80px;">Rank</th>
+                                    <th>Player</th>
+                                    <th style="width: 150px;">Points</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user, points in daily_leaderboard %}
+                                    <tr {% if current_user.id == user.id %}class="table-primary"{% endif %}>
+                                        <td>
+                                            {% if loop.index == 1 %}
+                                                <span class="badge bg-warning">
+                                                    <i class="bi bi-trophy-fill"></i> 1st
+                                                </span>
+                                            {% elif loop.index == 2 %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-medal"></i> 2nd
+                                                </span>
+                                            {% elif loop.index == 3 %}
+                                                <span class="badge bg-warning">
+                                                    <i class="bi bi-award"></i> 3rd
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">#{{ loop.index }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <strong>{{ user.display_name }}</strong>
+                                            {% if current_user.id == user.id %}
+                                                <span class="badge bg-info">You</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <h5 class="mb-0">
+                                                {% if points >= 0 %}
+                                                    <span class="badge bg-success">+{{ points }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">{{ points }}</span>
+                                                {% endif %}
+                                            </h5>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">No tasks completed today yet. Be the first!</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
