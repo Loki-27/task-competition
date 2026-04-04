@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Statistics - Daily Task Competition{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">📊 Statistics & Progress</h2>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h6 class="card-title">Total Goals</h6>
+                    <h2>{{ total_goals }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h6 class="card-title">Completed</h6>
+                    <h2>{{ completed_goals }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h6 class="card-title">In Progress</h6>
+                    <h2>{{ in_progress_goals }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h6 class="card-title">Completion Rate</h6>
+                    <h2>{{ completion_rate }}%</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Progress -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="bi bi-calendar3"></i> Weekly Goals Progress</h5>
+        </div>
+        <div class="card-body">
+            {% if weekly_stats %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Goal</th>
+                                <th>Type</th>
+                                <th>Progress</th>
+                                <th>Points</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for goal in weekly_stats %}
+                            <tr>
+                                <td>{{ goal.title }}</td>
+                                <td>
+                                    {% if goal.target > 0 %}
+                                        <span class="badge bg-info">Target</span>
+                                    {% else %}
+                                        <span class="badge bg-primary">Complete</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if goal.target > 0 %}
+                                        <div class="progress" style="height: 20px;">
+                                            {% set progress = (goal.progress_count / goal.target * 100)|int if goal.target > 0 else 0 %}
+                                            <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+                                                {{ goal.progress_count }}/{{ goal.target }}
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <span class="badge bg-success">✓ Completed</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-dark">{{ goal.points }} pts</span>
+                                </td>
+                                <td>
+                                    {% if goal.is_completed %}
+                                        <span class="badge bg-success">Done</span>
+                                    {% elif goal.target > 0 and goal.progress_count >= goal.target %}
+                                        <span class="badge bg-success">Done</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">In Progress</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">No weekly goals yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Monthly Progress -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Monthly Goals Progress</h5>
+        </div>
+        <div class="card-body">
+            {% if monthly_stats %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Goal</th>
+                                <th>Type</th>
+                                <th>Progress</th>
+                                <th>Points</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for goal in monthly_stats %}
+                            <tr>
+                                <td>{{ goal.title }}</td>
+                                <td>
+                                    {% if goal.target > 0 %}
+                                        <span class="badge bg-info">Target</span>
+                                    {% else %}
+                                        <span class="badge bg-primary">Complete</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if goal.target > 0 %}
+                                        <div class="progress" style="height: 20px;">
+                                            {% set progress = (goal.progress_count / goal.target * 100)|int if goal.target > 0 else 0 %}
+                                            <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+                                                {{ goal.progress_count }}/{{ goal.target }}
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <span class="badge bg-success">✓ Completed</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-dark">{{ goal.points }} pts</span>
+                                </td>
+                                <td>
+                                    {% if goal.is_completed %}
+                                        <span class="badge bg-success">Done</span>
+                                    {% elif goal.target > 0 and goal.progress_count >= goal.target %}
+                                        <span class="badge bg-success">Done</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">In Progress</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">No monthly goals yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <a href="{{ url_for('goals.weekly_dashboard') }}" class="btn btn-info">
+                <i class="bi bi-calendar3"></i> Manage Weekly Goals
+            </a>
+            <a href="{{ url_for('goals.monthly_dashboard') }}" class="btn btn-info">
+                <i class="bi bi-calendar-event"></i> Manage Monthly Goals
+            </a>
+            <a href="{{ url_for('tasks.dashboard') }}" class="btn btn-secondary">
+                <i class="bi bi-house"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

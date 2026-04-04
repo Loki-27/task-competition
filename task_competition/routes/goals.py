@@ -121,6 +121,75 @@ def monthly_dashboard():
                           month_display=format_month_display(month_key))
 
 
+@goals_bp.route('/statistics')
+@login_required
+def statistics():
+    """Display goals statistics and progress."""
+    # Get all goals
+    all_goals = Task.query.filter_by(
+        user_id=current_user.id,
+        is_active=True
+    ).all()
+    
+    # Separate by category
+    weekly_goals = [g for g in all_goals if g.category == 'weekly']
+    monthly_goals = [g for g in all_goals if g.category == 'monthly']
+    
+    # Calculate statistics for weekly goals
+    weekly_stats = []
+    for goal in weekly_goals:
+        completions = TaskCompletion.query.filter_by(
+            user_id=current_user.id,
+            task_id=goal.id
+        ).all()
+        
+        progress_count = sum(c.progress_count or 0 for c in completions if c.completion_type == 'full')
+        is_completed = len([c for c in completions if c.completion_type == 'full']) > 0
+        
+        weekly_stats.append({
+            'id': goal.id,
+            'title': goal.title,
+            'target': goal.target,
+            'progress_count': progress_count,
+            'is_completed': is_completed,
+            'points': goal.points
+        })
+    
+    # Calculate statistics for monthly goals
+    monthly_stats = []
+    for goal in monthly_goals:
+        completions = TaskCompletion.query.filter_by(
+            user_id=current_user.id,
+            task_id=goal.id
+        ).all()
+        
+        progress_count = sum(c.progress_count or 0 for c in completions if c.completion_type == 'full')
+        is_completed = len([c for c in completions if c.completion_type == 'full']) > 0
+        
+        monthly_stats.append({
+            'id': goal.id,
+            'title': goal.title,
+            'target': goal.target,
+            'progress_count': progress_count,
+            'is_completed': is_completed,
+            'points': goal.points
+        })
+    
+    # Calculate totals
+    total_goals = len(all_goals)
+    completed_goals = sum(1 for g in weekly_stats + monthly_stats if g['is_completed'])
+    in_progress_goals = total_goals - completed_goals
+    completion_rate = int((completed_goals / total_goals * 100) if total_goals > 0 else 0)
+    
+    return render_template('goals/statistics.html',
+                          weekly_stats=weekly_stats,
+                          monthly_stats=monthly_stats,
+                          total_goals=total_goals,
+                          completed_goals=completed_goals,
+                          in_progress_goals=in_progress_goals,
+                          completion_rate=completion_rate)
+
+
 @goals_bp.route('/create/<goal_type>', methods=['GET', 'POST'])
 @login_required
 def create_goal(goal_type):
