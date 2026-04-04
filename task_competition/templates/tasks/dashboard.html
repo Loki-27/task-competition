@@ -58,7 +58,7 @@
                                             <div class="timer-display" id="timer-display-{{ task.id }}">00:00:00</div>
                                             <div class="timer-info">
                                                 <strong>Goal: {{ '%02d' % (task.duration_minutes // 60) }}:{{ '%02d' % (task.duration_minutes % 60) }}</strong>
-                                                <div id="timer-warning-{{ task.id }}}" class="mt-2">{{ '%02d' % (task.duration_minutes // 60) }}:{{ '%02d' % (task.duration_minutes % 60) }} remaining</div>
+                                                <div id="timer-warning-{{ task.id }}" class="mt-2">{{ '%02d' % (task.duration_minutes // 60) }}:{{ '%02d' % (task.duration_minutes % 60) }} remaining</div>
                                             </div>
                                             <div class="timer-progress">
                                                 <div class="timer-progress-bar">

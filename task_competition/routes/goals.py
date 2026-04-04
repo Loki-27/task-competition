@@ -3,8 +3,10 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from datetime import datetime, timedelta
 from ..models import db, Task, TaskCompletion, User
+import logging
 
 goals_bp = Blueprint('goals', __name__, url_prefix='/goals')
+logger = logging.getLogger(__name__)
 
 
 def get_week_key(date=None):
@@ -60,186 +62,216 @@ def format_month_display(month_key):
 @login_required
 def weekly_dashboard():
     """Display weekly goals dashboard."""
-    week_key = request.args.get('week', get_week_key())
-    
-    # Navigate weeks
-    current_date = parse_week_key(week_key)
-    prev_date = current_date - timedelta(weeks=1)
-    next_date = current_date + timedelta(weeks=1)
-    
-    prev_week = get_week_key(prev_date)
-    next_week = get_week_key(next_date)
-    
-    # Get weekly goals for current user
-    weekly_goals = Task.query.filter_by(
-        user_id=current_user.id,
-        category='weekly',
-        is_active=True
-    ).order_by(Task.order).all()
-    
-    return render_template('goals/weekly.html',
-                          weekly_goals=weekly_goals,
-                          current_week=week_key,
-                          prev_week=prev_week,
-                          next_week=next_week,
-                          week_display=format_week_display(week_key))
+    try:
+        week_key = request.args.get('week', get_week_key())
+        
+        # Navigate weeks
+        current_date = parse_week_key(week_key)
+        prev_date = current_date - timedelta(weeks=1)
+        next_date = current_date + timedelta(weeks=1)
+        
+        prev_week = get_week_key(prev_date)
+        next_week = get_week_key(next_date)
+        
+        # Get weekly goals for current user
+        weekly_goals = Task.query.filter_by(
+            user_id=current_user.id,
+            category='weekly',
+            is_active=True
+        ).order_by(Task.order).all()
+        
+        return render_template('goals/weekly.html',
+                              weekly_goals=weekly_goals,
+                              current_week=week_key,
+                              prev_week=prev_week,
+                              next_week=next_week,
+                              week_display=format_week_display(week_key))
+    except Exception as e:
+        logger.error(f"Error in weekly_dashboard: {e}")
+        flash('Error loading weekly goals', 'danger')
+        return redirect(url_for('tasks.dashboard'))
 
 
 @goals_bp.route('/monthly')
 @login_required
 def monthly_dashboard():
     """Display monthly goals dashboard."""
-    month_key = request.args.get('month', get_month_key())
-    
-    # Navigate months
-    current_date = parse_month_key(month_key)
-    if current_date.month == 1:
-        prev_date = current_date.replace(year=current_date.year - 1, month=12)
-    else:
-        prev_date = current_date.replace(month=current_date.month - 1)
-    
-    if current_date.month == 12:
-        next_date = current_date.replace(year=current_date.year + 1, month=1)
-    else:
-        next_date = current_date.replace(month=current_date.month + 1)
-    
-    prev_month = get_month_key(prev_date)
-    next_month = get_month_key(next_date)
-    
-    # Get monthly goals for current user
-    monthly_goals = Task.query.filter_by(
-        user_id=current_user.id,
-        category='monthly',
-        is_active=True
-    ).order_by(Task.order).all()
-    
-    return render_template('goals/monthly.html',
-                          monthly_goals=monthly_goals,
-                          current_month=month_key,
-                          prev_month=prev_month,
-                          next_month=next_month,
-                          month_display=format_month_display(month_key))
+    try:
+        month_key = request.args.get('month', get_month_key())
+        
+        # Navigate months
+        current_date = parse_month_key(month_key)
+        if current_date.month == 1:
+            prev_date = current_date.replace(year=current_date.year - 1, month=12)
+        else:
+            prev_date = current_date.replace(month=current_date.month - 1)
+        
+        if current_date.month == 12:
+            next_date = current_date.replace(year=current_date.year + 1, month=1)
+        else:
+            next_date = current_date.replace(month=current_date.month + 1)
+        
+        prev_month = get_month_key(prev_date)
+        next_month = get_month_key(next_date)
+        
+        # Get monthly goals for current user
+        monthly_goals = Task.query.filter_by(
+            user_id=current_user.id,
+            category='monthly',
+            is_active=True
+        ).order_by(Task.order).all()
+        
+        return render_template('goals/monthly.html',
+                              monthly_goals=monthly_goals,
+                              current_month=month_key,
+                              prev_month=prev_month,
+                              next_month=next_month,
+                              month_display=format_month_display(month_key))
+    except Exception as e:
+        logger.error(f"Error in monthly_dashboard: {e}")
+        flash('Error loading monthly goals', 'danger')
+        return redirect(url_for('tasks.dashboard'))
 
 
 @goals_bp.route('/statistics')
 @login_required
 def statistics():
     """Display goals statistics and progress."""
-    # Get all goals
-    all_goals = Task.query.filter_by(
-        user_id=current_user.id,
-        is_active=True
-    ).all()
-    
-    # Separate by category
-    weekly_goals = [g for g in all_goals if g.category == 'weekly']
-    monthly_goals = [g for g in all_goals if g.category == 'monthly']
-    
-    # Calculate statistics for weekly goals
-    weekly_stats = []
-    for goal in weekly_goals:
-        completions = TaskCompletion.query.filter_by(
+    try:
+        # Get all goals
+        all_goals = Task.query.filter_by(
             user_id=current_user.id,
-            task_id=goal.id
+            is_active=True
         ).all()
         
-        progress_count = sum(c.progress_count or 0 for c in completions if c.completion_type == 'full')
-        is_completed = len([c for c in completions if c.completion_type == 'full']) > 0
+        # Separate by category
+        weekly_goals = [g for g in all_goals if g.category == 'weekly']
+        monthly_goals = [g for g in all_goals if g.category == 'monthly']
         
-        weekly_stats.append({
-            'id': goal.id,
-            'title': goal.title,
-            'target': goal.target,
-            'progress_count': progress_count,
-            'is_completed': is_completed,
-            'points': goal.points
-        })
-    
-    # Calculate statistics for monthly goals
-    monthly_stats = []
-    for goal in monthly_goals:
-        completions = TaskCompletion.query.filter_by(
-            user_id=current_user.id,
-            task_id=goal.id
-        ).all()
+        # Calculate statistics for weekly goals
+        weekly_stats = []
+        for goal in weekly_goals:
+            try:
+                completions = TaskCompletion.query.filter_by(
+                    user_id=current_user.id,
+                    task_id=goal.id
+                ).all()
+                
+                progress_count = sum(c.progress_count or 0 for c in completions if c.completion_type == 'full')
+                is_completed = len([c for c in completions if c.completion_type == 'full']) > 0
+            except Exception as e:
+                logger.warning(f"Error calculating stats for goal {goal.id}: {e}")
+                progress_count = 0
+                is_completed = False
+            
+            weekly_stats.append({
+                'id': goal.id,
+                'title': goal.title,
+                'target': goal.target,
+                'progress_count': progress_count,
+                'is_completed': is_completed,
+                'points': goal.points
+            })
         
-        progress_count = sum(c.progress_count or 0 for c in completions if c.completion_type == 'full')
-        is_completed = len([c for c in completions if c.completion_type == 'full']) > 0
+        # Calculate statistics for monthly goals
+        monthly_stats = []
+        for goal in monthly_goals:
+            try:
+                completions = TaskCompletion.query.filter_by(
+                    user_id=current_user.id,
+                    task_id=goal.id
+                ).all()
+                
+                progress_count = sum(c.progress_count or 0 for c in completions if c.completion_type == 'full')
+                is_completed = len([c for c in completions if c.completion_type == 'full']) > 0
+            except Exception as e:
+                logger.warning(f"Error calculating stats for goal {goal.id}: {e}")
+                progress_count = 0
+                is_completed = False
+            
+            monthly_stats.append({
+                'id': goal.id,
+                'title': goal.title,
+                'target': goal.target,
+                'progress_count': progress_count,
+                'is_completed': is_completed,
+                'points': goal.points
+            })
         
-        monthly_stats.append({
-            'id': goal.id,
-            'title': goal.title,
-            'target': goal.target,
-            'progress_count': progress_count,
-            'is_completed': is_completed,
-            'points': goal.points
-        })
-    
-    # Calculate totals
-    total_goals = len(all_goals)
-    completed_goals = sum(1 for g in weekly_stats + monthly_stats if g['is_completed'])
-    in_progress_goals = total_goals - completed_goals
-    completion_rate = int((completed_goals / total_goals * 100) if total_goals > 0 else 0)
-    
-    return render_template('goals/statistics.html',
-                          weekly_stats=weekly_stats,
-                          monthly_stats=monthly_stats,
-                          total_goals=total_goals,
-                          completed_goals=completed_goals,
-                          in_progress_goals=in_progress_goals,
-                          completion_rate=completion_rate)
+        # Calculate totals
+        total_goals = len(all_goals)
+        completed_goals = sum(1 for g in weekly_stats + monthly_stats if g['is_completed'])
+        in_progress_goals = total_goals - completed_goals
+        completion_rate = int((completed_goals / total_goals * 100) if total_goals > 0 else 0)
+        
+        return render_template('goals/statistics.html',
+                              weekly_stats=weekly_stats,
+                              monthly_stats=monthly_stats,
+                              total_goals=total_goals,
+                              completed_goals=completed_goals,
+                              in_progress_goals=in_progress_goals,
+                              completion_rate=completion_rate)
+    except Exception as e:
+        logger.error(f"Error in statistics: {e}")
+        flash('Error loading statistics', 'danger')
+        return redirect(url_for('tasks.dashboard'))
 
 
 @goals_bp.route('/create/<goal_type>', methods=['GET', 'POST'])
 @login_required
 def create_goal(goal_type):
     """Create a new weekly or monthly goal."""
-    if goal_type not in ['weekly', 'monthly']:
-        flash('Invalid goal type.', 'danger')
+    try:
+        if goal_type not in ['weekly', 'monthly']:
+            flash('Invalid goal type.', 'danger')
+            return redirect(url_for('tasks.dashboard'))
+        
+        if request.method == 'POST':
+            title = request.form.get('title')
+            description = request.form.get('description')
+            points = request.form.get('points', type=int, default=10)
+            target = request.form.get('target', type=int, default=0)
+            duration_minutes = request.form.get('duration_minutes', type=int, default=0)
+            goal_type_choice = request.form.get('goal_type_choice', 'completion')
+            
+            if not title:
+                flash('Goal title is required.', 'danger')
+                return redirect(url_for('goals.create_goal', goal_type=goal_type))
+            
+            if goal_type_choice == 'target' and not target:
+                flash('Target count is required for target-based goals.', 'danger')
+                return redirect(url_for('goals.create_goal', goal_type=goal_type))
+            
+            # Get highest order number
+            highest_order = db.session.query(db.func.max(Task.order)).filter_by(
+                user_id=current_user.id,
+                category=goal_type
+            ).scalar() or -1
+            
+            goal = Task(
+                user_id=current_user.id,
+                title=title,
+                description=description,
+                points=points,
+                task_type='goal',
+                category=goal_type,
+                is_active=True,
+                order=highest_order + 1,
+                target=target if goal_type_choice == 'target' else 0,
+                duration_minutes=duration_minutes if duration_minutes > 0 else None
+            )
+            
+            db.session.add(goal)
+            db.session.commit()
+            
+            flash(f'{goal_type.capitalize()} goal "{title}" created!', 'success')
+            return redirect(url_for('goals.weekly_dashboard' if goal_type == 'weekly' else 'goals.monthly_dashboard'))
+        
+        return render_template('goals/create.html', goal_type=goal_type)
+    except Exception as e:
+        logger.error(f"Error in create_goal: {e}")
+        flash(f'Error creating goal: {str(e)}', 'danger')
         return redirect(url_for('tasks.dashboard'))
-    
-    if request.method == 'POST':
-        title = request.form.get('title')
-        description = request.form.get('description')
-        points = request.form.get('points', type=int, default=10)
-        target = request.form.get('target', type=int, default=0)
-        duration_minutes = request.form.get('duration_minutes', type=int, default=0)
-        goal_type_choice = request.form.get('goal_type_choice', 'completion')
-        
-        if not title:
-            flash('Goal title is required.', 'danger')
-            return redirect(url_for('goals.create_goal', goal_type=goal_type))
-        
-        if goal_type_choice == 'target' and not target:
-            flash('Target count is required for target-based goals.', 'danger')
-            return redirect(url_for('goals.create_goal', goal_type=goal_type))
-        
-        # Get highest order number
-        highest_order = db.session.query(db.func.max(Task.order)).filter_by(
-            user_id=current_user.id,
-            category=goal_type
-        ).scalar() or -1
-        
-        goal = Task(
-            user_id=current_user.id,
-            title=title,
-            description=description,
-            points=points,
-            task_type='goal',
-            category=goal_type,
-            is_active=True,
-            order=highest_order + 1,
-            target=target if goal_type_choice == 'target' else 0,
-            duration_minutes=duration_minutes if duration_minutes > 0 else None
-        )
-        
-        db.session.add(goal)
-        db.session.commit()
-        
-        flash(f'{goal_type.capitalize()} goal "{title}" created!', 'success')
-        return redirect(url_for('goals.weekly_dashboard' if goal_type == 'weekly' else 'goals.monthly_dashboard'))
-    
-    return render_template('goals/create.html', goal_type=goal_type)
 
 
 @goals_bp.route('/<int:goal_id>/complete', methods=['POST'])
@@ -315,10 +347,10 @@ def update_progress(goal_id):
     
     # Check if goal is complete
     if goal.target > 0 and completion.progress_count >= goal.target:
-        completion.completion_type = 'full'
         # Only award points once when goal is completed
         if completion.completion_type != 'full':  # Only add if wasn't already full
             current_user.total_points += goal.points
+        completion.completion_type = 'full'
     
     db.session.commit()
     
