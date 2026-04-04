@@ -74,11 +74,19 @@ def weekly_dashboard():
         next_week = get_week_key(next_date)
         
         # Get weekly goals for current user
-        weekly_goals = Task.query.filter_by(
-            user_id=current_user.id,
-            category='weekly',
-            is_active=True
-        ).order_by(Task.order).all()
+        try:
+            weekly_goals = Task.query.filter_by(
+                user_id=current_user.id,
+                category='weekly',
+                is_active=True
+            ).order_by(Task.order).all()
+        except Exception:
+            # If category column doesn't exist, get all tasks
+            all_tasks = Task.query.filter_by(
+                user_id=current_user.id,
+                is_active=True
+            ).order_by(Task.order).all()
+            weekly_goals = [t for t in all_tasks if getattr(t, 'category', None) == 'weekly']
         
         return render_template('goals/weekly.html',
                               weekly_goals=weekly_goals,
@@ -115,11 +123,19 @@ def monthly_dashboard():
         next_month = get_month_key(next_date)
         
         # Get monthly goals for current user
-        monthly_goals = Task.query.filter_by(
-            user_id=current_user.id,
-            category='monthly',
-            is_active=True
-        ).order_by(Task.order).all()
+        try:
+            monthly_goals = Task.query.filter_by(
+                user_id=current_user.id,
+                category='monthly',
+                is_active=True
+            ).order_by(Task.order).all()
+        except Exception:
+            # If category column doesn't exist, get all tasks
+            all_tasks = Task.query.filter_by(
+                user_id=current_user.id,
+                is_active=True
+            ).order_by(Task.order).all()
+            monthly_goals = [t for t in all_tasks if getattr(t, 'category', None) == 'monthly']
         
         return render_template('goals/monthly.html',
                               monthly_goals=monthly_goals,
@@ -145,8 +161,8 @@ def statistics():
         ).all()
         
         # Separate by category
-        weekly_goals = [g for g in all_goals if g.category == 'weekly']
-        monthly_goals = [g for g in all_goals if g.category == 'monthly']
+        weekly_goals = [g for g in all_goals if getattr(g, 'category', 'daily') == 'weekly']
+        monthly_goals = [g for g in all_goals if getattr(g, 'category', 'daily') == 'monthly']
         
         # Calculate statistics for weekly goals
         weekly_stats = []
