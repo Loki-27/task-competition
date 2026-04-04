@@ -9,6 +9,7 @@ from datetime import datetime
 from .routes.auth import auth_bp
 from .routes.tasks import tasks_bp
 from .routes.leaderboard import leaderboard_bp
+from .routes.goals import goals_bp
 
 def create_app(config_name=None):
     """Create and configure the Flask application."""
@@ -35,6 +36,7 @@ def create_app(config_name=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(tasks_bp)
     app.register_blueprint(leaderboard_bp)
+    app.register_blueprint(goals_bp)
     
     # Create database tables
     with app.app_context():

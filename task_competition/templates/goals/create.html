@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">✨ Create New {{ goal_type.capitalize() }} Goal</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="goalForm">
+                        <!-- Title -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Goal Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                   placeholder="e.g., Complete 7 lectures" required>
+                            <small class="form-text text-muted">What do you want to accomplish?</small>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" 
+                                      rows="2" placeholder="Add more details about this goal..."></textarea>
+                        </div>
+
+                        <!-- Goal Type (Hidden) -->
+                        <input type="hidden" name="category" value="{{ goal_type }}">
+
+                        <!-- Target-based or Completion-based -->
+                        <div class="mb-3">
+                            <label class="form-label">Goal Type <span class="text-danger">*</span></label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="goal_type_choice" 
+                                       id="completionBased" value="completion" checked>
+                                <label class="form-check-label" for="completionBased">
+                                    ✓ Completion-based (mark as done)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="goal_type_choice" 
+                                       id="targetBased" value="target">
+                                <label class="form-check-label" for="targetBased">
+                                    📊 Target-based (e.g., 7 lectures)
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Target Count (for target-based goals) -->
+                        <div class="mb-3" id="targetCountDiv" style="display: none;">
+                            <label for="target" class="form-label">Target Count <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="target" name="target" 
+                                   placeholder="e.g., 7" min="1">
+                            <small class="form-text text-muted">How many items need to be completed?</small>
+                        </div>
+
+                        <!-- Duration -->
+                        <div class="mb-3">
+                            <label for="duration_minutes" class="form-label">Duration (minutes)</label>
+                            <input type="number" class="form-control" id="duration_minutes" name="duration_minutes" 
+                                   placeholder="e.g., 60" min="1">
+                            <small class="form-text text-muted">Estimated time to complete this goal</small>
+                        </div>
+
+                        <!-- Points -->
+                        <div class="mb-3">
+                            <label for="points" class="form-label">Points Reward <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="points" name="points" 
+                                   placeholder="e.g., 50" value="50" min="0" required>
+                            <small class="form-text text-muted">How many points for completing this goal?</small>
+                        </div>
+
+                        <!-- Start Date (for tracking) -->
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date">
+                            <small class="form-text text-muted">Optional: when does this goal start counting?</small>
+                        </div>
+
+                        <!-- Deadline (for weekly/monthly) -->
+                        <div class="mb-3">
+                            <label for="deadline" class="form-label">Deadline</label>
+                            <input type="date" class="form-control" id="deadline" name="deadline">
+                            <small class="form-text text-muted">Optional: deadline for this goal</small>
+                        </div>
+
+                        <!-- Priority -->
+                        <div class="mb-3">
+                            <label for="priority" class="form-label">Priority</label>
+                            <select class="form-select" id="priority" name="priority">
+                                <option value="low">🟢 Low</option>
+                                <option value="medium" selected>🟡 Medium</option>
+                                <option value="high">🔴 High</option>
+                            </select>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle"></i> Create Goal
+                            </button>
+                            <a href="{% if goal_type == 'weekly' %}{{ url_for('goals.weekly_dashboard') }}{% else %}{{ url_for('goals.monthly_dashboard') }}{% endif %}" 
+                               class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tips Section -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">💡 Goal Tips</h6>
+                </div>
+                <div class="card-body small">
+                    <ul class="mb-0">
+                        <li><strong>Completion-based:</strong> Use for one-time tasks (e.g., "Write essay")</li>
+                        <li><strong>Target-based:</strong> Use for repeating tasks (e.g., "Read 7 papers")</li>
+                        <li>Higher points = more challenging goals</li>
+                        <li>Set realistic deadlines</li>
+                        <li>Weekly goals reset each week; monthly goals reset each month</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('completionBased').addEventListener('change', function() {
+    document.getElementById('targetCountDiv').style.display = 'none';
+    document.getElementById('target').removeAttribute('required');
+});
+
+document.getElementById('targetBased').addEventListener('change', function() {
+    document.getElementById('targetCountDiv').style.display = 'block';
+    document.getElementById('target').setAttribute('required', 'required');
+});
+
+// Set today's date as default
+document.getElementById('start_date').valueAsDate = new Date();
+
+// Handle form submission with validation
+document.getElementById('goalForm').addEventListener('submit', function(e) {
+    const goalType = document.querySelector('input[name="goal_type_choice"]:checked').value;
+    
+    // Validate target for target-based goals
+    if (goalType === 'target') {
+        const target = parseInt(document.getElementById('target').value);
+        if (!target || target < 1) {
+            e.preventDefault();
+            alert('Please enter a valid target count');
+            return false;
+        }
+    }
+    
+    return true;
+});
+</script>
+{% endblock %}

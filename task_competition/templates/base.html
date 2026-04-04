@@ -42,6 +42,19 @@
                             <i class="bi bi-check-circle"></i> Verify Tasks
                         </a>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="goalsDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-star"></i> Goals
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('goals.weekly_dashboard') }}">
+                                <i class="bi bi-calendar3"></i> Weekly Goals
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('goals.monthly_dashboard') }}">
+                                <i class="bi bi-calendar-event"></i> Monthly Goals
+                            </a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#" id="themeToggle" role="button" title="Toggle dark theme">
                             <i class="bi bi-moon"></i>

@@ -131,3 +131,201 @@ window.copyToClipboard = copyToClipboard;
 window.formatPoints = formatPoints;
 window.showNotification = showNotification;
 window.formatDate = formatDate;
+
+/**
+ * Timer Manager Class
+ */
+class TimerManager {
+    constructor(taskId, durationMinutes = 60) {
+        this.taskId = taskId;
+        this.durationSeconds = durationMinutes * 60;
+        this.elapsedSeconds = 0;
+        this.isRunning = false;
+        this.intervalId = null;
+        this.storageKey = `timer_${taskId}`;
+        
+        // Load saved state from localStorage
+        this.loadState();
+    }
+
+    /**
+     * Load timer state from localStorage
+     */
+    loadState() {
+        const saved = localStorage.getItem(this.storageKey);
+        if (saved) {
+            const state = JSON.parse(saved);
+            this.elapsedSeconds = state.elapsed || 0;
+            this.isRunning = false; // Never auto-start, require user action
+        }
+    }
+
+    /**
+     * Save timer state to localStorage
+     */
+    saveState() {
+        const state = {
+            elapsed: this.elapsedSeconds,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(this.storageKey, JSON.stringify(state));
+    }
+
+    /**
+     * Format seconds to HH:MM:SS
+     */
+    static formatTime(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    /**
+     * Start or resume timer
+     */
+    start() {
+        if (this.isRunning) return;
+        
+        this.isRunning = true;
+        this.intervalId = setInterval(() => {
+            this.elapsedSeconds++;
+            this.saveState();
+            this.updateDisplay();
+            
+            // Check for warnings and danger states
+            const remaining = this.durationSeconds - this.elapsedSeconds;
+            if (remaining === 300) { // 5 minutes left
+                showNotification('⏰ 5 minutes remaining', 'warning');
+            } else if (remaining === 0) {
+                this.stop();
+                showNotification('⏱️ Time\'s up!', 'info');
+            }
+        }, 1000);
+    }
+
+    /**
+     * Pause timer
+     */
+    pause() {
+        this.isRunning = false;
+        if (this.intervalId) {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
+        }
+        this.saveState();
+        this.updateDisplay();
+    }
+
+    /**
+     * Reset timer
+     */
+    reset() {
+        this.isRunning = false;
+        if (this.intervalId) {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
+        }
+        this.elapsedSeconds = 0;
+        localStorage.removeItem(this.storageKey);
+        this.updateDisplay();
+    }
+
+    /**
+     * Stop and save completion
+     */
+    async stop() {
+        this.pause();
+        
+        try {
+            const response = await fetch(`/tasks/${this.taskId}/timer/stop`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    elapsed_seconds: this.elapsedSeconds
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                showNotification(`✓ Task completed! +${data.points} points`, 'success');
+                localStorage.removeItem(this.storageKey);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showNotification('Error saving task completion', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Error saving task completion', 'error');
+        }
+    }
+
+    /**
+     * Update timer display
+     */
+    updateDisplay() {
+        const display = document.getElementById(`timer-display-${this.taskId}`);
+        if (display) {
+            display.textContent = TimerManager.formatTime(this.elapsedSeconds);
+            
+            // Update progress bar
+            const progressFill = document.getElementById(`timer-progress-${this.taskId}`);
+            if (progressFill) {
+                const percent = (this.elapsedSeconds / this.durationSeconds) * 100;
+                progressFill.style.width = Math.min(percent, 100) + '%';
+            }
+            
+            // Update remaining time
+            const remaining = this.durationSeconds - this.elapsedSeconds;
+            const warningEl = document.getElementById(`timer-warning-${this.taskId}`);
+            if (warningEl) {
+                warningEl.textContent = `${TimerManager.formatTime(remaining)} remaining`;
+                
+                // Add visual warnings
+                if (remaining <= 0) {
+                    display.classList.add('danger');
+                    display.classList.remove('warning');
+                } else if (remaining <= 300) { // 5 minutes
+                    display.classList.add('warning');
+                    display.classList.remove('danger');
+                } else {
+                    display.classList.remove('warning', 'danger');
+                }
+            }
+            
+            // Update button states
+            this.updateButtonStates();
+        }
+    }
+
+    /**
+     * Update button states based on timer state
+     */
+    updateButtonStates() {
+        const startBtn = document.getElementById(`timer-start-${this.taskId}`);
+        const pauseBtn = document.getElementById(`timer-pause-${this.taskId}`);
+        const stopBtn = document.getElementById(`timer-stop-${this.taskId}`);
+        
+        if (startBtn) {
+            startBtn.disabled = this.isRunning;
+            startBtn.textContent = this.elapsedSeconds > 0 ? '▶ Resume' : '▶ Start';
+        }
+        if (pauseBtn) {
+            pauseBtn.disabled = !this.isRunning;
+        }
+        if (stopBtn) {
+            stopBtn.disabled = this.elapsedSeconds === 0;
+        }
+    }
+}
+
+// Initialize timers on the page
+window.TimerManager = TimerManager;
+
+// Export for global use
+window.initializeTimer = function(taskId, durationMinutes) {
+    return new TimerManager(taskId, durationMinutes);
+};

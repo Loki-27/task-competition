@@ -51,6 +51,41 @@
                                         {% if task.requires_verification %}
                                             <span class="badge bg-warning">Requires Verification</span>
                                         {% endif %}
+                                        
+                                        <!-- Timer UI if duration is set -->
+                                        {% if task.duration_minutes %}
+                                        <div class="mt-3 timer-section" id="timer-container-{{ task.id }}">
+                                            <div class="timer-display" id="timer-display-{{ task.id }}">00:00:00</div>
+                                            <div class="timer-info">
+                                                <strong>Goal: {{ '%02d' % (task.duration_minutes // 60) }}:{{ '%02d' % (task.duration_minutes % 60) }}</strong>
+                                                <div id="timer-warning-{{ task.id }}}" class="mt-2">{{ '%02d' % (task.duration_minutes // 60) }}:{{ '%02d' % (task.duration_minutes % 60) }} remaining</div>
+                                            </div>
+                                            <div class="timer-progress">
+                                                <div class="timer-progress-bar">
+                                                    <div class="timer-progress-fill" id="timer-progress-{{ task.id }}"></div>
+                                                </div>
+                                            </div>
+                                            <div class="timer-controls">
+                                                <button type="button" class="btn-timer-start" id="timer-start-{{ task.id }}">▶ Start</button>
+                                                <button type="button" class="btn-timer-pause" id="timer-pause-{{ task.id }}" disabled>⏸ Pause</button>
+                                                <button type="button" class="btn-timer-stop" id="timer-stop-{{ task.id }}" disabled>⏹ Stop</button>
+                                                <button type="button" class="btn-timer-reset" id="timer-reset-{{ task.id }}">↺ Reset</button>
+                                            </div>
+                                        </div>
+                                        <script>
+                                            (function() {
+                                                const timer = new TimerManager({{ task.id }}, {{ task.duration_minutes }});
+                                                timer.updateDisplay();
+                                                
+                                                document.getElementById('timer-start-{{ task.id }}').addEventListener('click', () => timer.start());
+                                                document.getElementById('timer-pause-{{ task.id }}').addEventListener('click', () => timer.pause());
+                                                document.getElementById('timer-stop-{{ task.id }}').addEventListener('click', () => timer.stop());
+                                                document.getElementById('timer-reset-{{ task.id }}').addEventListener('click', () => {
+                                                    if (confirm('Reset timer?')) timer.reset();
+                                                });
+                                            })();
+                                        </script>
+                                        {% endif %}
                                     </div>
                                     <div class="ms-2">
                                         {% if task.id in completed_task_ids %}
@@ -135,6 +170,12 @@
         </a>
         <a href="{{ url_for('leaderboard.index') }}" class="btn btn-lg btn-warning">
             <i class="bi bi-trophy"></i> View Leaderboard
+        </a>
+        <a href="{{ url_for('goals.weekly_dashboard') }}" class="btn btn-lg btn-info">
+            <i class="bi bi-calendar3"></i> Weekly Goals
+        </a>
+        <a href="{{ url_for('goals.monthly_dashboard') }}" class="btn btn-lg btn-secondary">
+            <i class="bi bi-calendar-event"></i> Monthly Goals
         </a>
     </div>
 </div>

@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>📅 Weekly Goals</h2>
+                <a href="{{ url_for('goals.create_goal', type='weekly') }}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> New Goal
+                </a>
+            </div>
+
+            <!-- Week Navigation -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <a href="{{ url_for('goals.weekly_dashboard', week=prev_week) }}" class="btn btn-sm btn-outline-primary">
+                                ← Previous Week
+                            </a>
+                        </div>
+                        <div class="col text-center">
+                            <h5 class="mb-0">{{ current_week }}</h5>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{{ url_for('goals.weekly_dashboard', week=next_week) }}" class="btn btn-sm btn-outline-primary">
+                                Next Week →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Goals List -->
+            {% if weekly_goals %}
+                <div class="row">
+                    {% for goal in weekly_goals %}
+                    <div class="col-md-6 mb-3 goal-item">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="mb-0">{{ goal.title }}</h6>
+                            </div>
+                            <div class="card-body">
+                                <!-- Goal Type Badge -->
+                                {% if goal.target %}
+                                    <span class="badge bg-info mb-2">Target: {{ goal.target }}</span>
+                                {% endif %}
+                                {% if goal.duration_minutes %}
+                                    <span class="badge bg-warning mb-2">Duration: {{ goal.duration_minutes }}m</span>
+                                {% endif %}
+
+                                <!-- Progress Bar -->
+                                {% if goal.target %}
+                                    {% set completions = goal.completions|length %}
+                                    {% set progress_count = 0 %}
+                                    {% for comp in goal.completions %}
+                                        {% if comp.week_key == current_week %}
+                                            {% set progress_count = comp.progress_count %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% set percent = (progress_count / goal.target * 100)|int if goal.target > 0 else 0 %}
+                                    
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <small>Progress</small>
+                                            <small><strong>{{ progress_count }}/{{ goal.target }}</strong></small>
+                                        </div>
+                                        <div class="progress">
+                                            <div class="progress-bar{% if percent == 100 %} bg-success{% endif %}" 
+                                                 role="progressbar" 
+                                                 style="width: {{ percent }}%;"
+                                                 aria-valuenow="{{ percent }}" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                <!-- Goal Description -->
+                                {% if goal.description %}
+                                    <p class="small text-muted mb-3">{{ goal.description }}</p>
+                                {% endif %}
+
+                                <!-- Points -->
+                                <div class="mb-3">
+                                    <span class="badge bg-dark">
+                                        <i class="bi bi-star-fill"></i> {{ goal.points|default(0) }} pts
+                                    </span>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="d-grid gap-2">
+                                    {% if goal.target %}
+                                        <button class="btn btn-sm btn-outline-primary update-progress-btn" 
+                                                data-goal-id="{{ goal.id }}"
+                                                data-goal-title="{{ goal.title }}">
+                                            ➕ Increment Progress
+                                        </button>
+                                    {% else %}
+                                        <button class="btn btn-sm btn-primary complete-goal-btn" 
+                                                data-goal-id="{{ goal.id }}"
+                                                data-goal-title="{{ goal.title }}">
+                                            ✓ Mark Complete
+                                        </button>
+                                    {% endif %}
+                                    <a href="#" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    <h5 class="alert-heading">No weekly goals yet!</h5>
+                    <p>Create your first weekly goal to get started.</p>
+                    <a href="{{ url_for('goals.create_goal', type='weekly') }}" class="btn btn-sm btn-info">Create Goal</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.complete-goal-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const goalId = btn.getAttribute('data-goal-id');
+        const goalTitle = btn.getAttribute('data-goal-title');
+        
+        try {
+            const response = await fetch(`/goals/${goalId}/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                btn.textContent = '✓ Completed!';
+                btn.classList.add('btn-success');
+                btn.classList.remove('btn-primary');
+                btn.disabled = true;
+                
+                // Show success toast
+                showToast(`"${goalTitle}" marked complete! +${data.points} points`);
+                
+                // Reload page after 1 second
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('Error completing goal', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error completing goal', 'error');
+        }
+    });
+});
+
+document.querySelectorAll('.update-progress-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const goalId = btn.getAttribute('data-goal-id');
+        const goalTitle = btn.getAttribute('data-goal-title');
+        
+        try {
+            const response = await fetch(`/goals/${goalId}/progress`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                showToast(`"${goalTitle}" progress updated: ${data.progress_count}/${data.target}`);
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('Error updating progress', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error updating progress', 'error');
+        }
+    });
+});
+
+function showToast(message, type = 'success') {
+    // Simple toast notification
+    const alertClass = type === 'error' ? 'alert-danger' : 'alert-success';
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', alertHtml);
+}
+</script>
+{% endblock %}

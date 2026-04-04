@@ -215,3 +215,98 @@ def verify_task(completion_id, action):
     db.session.commit()
     
     return redirect(url_for('tasks.pending_verifications'))
+
+# Timer endpoints
+@tasks_bp.route('/<int:task_id>/timer/start', methods=['POST'])
+@login_required
+def start_timer(task_id):
+    """Start or resume a timer for a task."""
+    task = Task.query.get_or_404(task_id)
+    
+    if task.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.json or {}
+    elapsed_seconds = data.get('elapsed_seconds', 0)
+    
+    return jsonify({
+        'success': True,
+        'task_id': task_id,
+        'duration_minutes': task.duration_minutes or 60,
+        'elapsed_seconds': elapsed_seconds,
+        'message': 'Timer started'
+    })
+
+
+@tasks_bp.route('/<int:task_id>/timer/pause', methods=['POST'])
+@login_required
+def pause_timer(task_id):
+    """Pause a timer for a task."""
+    task = Task.query.get_or_404(task_id)
+    
+    if task.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.json or {}
+    elapsed_seconds = data.get('elapsed_seconds', 0)
+    
+    return jsonify({
+        'success': True,
+        'task_id': task_id,
+        'elapsed_seconds': elapsed_seconds,
+        'message': 'Timer paused'
+    })
+
+
+@tasks_bp.route('/<int:task_id>/timer/stop', methods=['POST'])
+@login_required
+def stop_timer(task_id):
+    """Stop and save timer for a task."""
+    task = Task.query.get_or_404(task_id)
+    
+    if task.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.json or {}
+    elapsed_seconds = data.get('elapsed_seconds', 0)
+    
+    # Create completion record with elapsed time
+    today = datetime.utcnow().date()
+    completion = TaskCompletion(
+        user_id=current_user.id,
+        task_id=task_id,
+        completed_at=datetime.utcnow(),
+        elapsed_seconds=elapsed_seconds
+    )
+    
+    db.session.add(completion)
+    
+    # Award points
+    current_user.total_points += task.points
+    
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'task_id': task_id,
+        'elapsed_seconds': elapsed_seconds,
+        'points': task.points,
+        'message': f'Timer stopped and task completed! +{task.points} points'
+    })
+
+
+@tasks_bp.route('/<int:task_id>/timer/reset', methods=['POST'])
+@login_required
+def reset_timer(task_id):
+    """Reset a timer for a task."""
+    task = Task.query.get_or_404(task_id)
+    
+    if task.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    return jsonify({
+        'success': True,
+        'task_id': task_id,
+        'elapsed_seconds': 0,
+        'message': 'Timer reset'
+    })
