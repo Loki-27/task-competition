@@ -52,7 +52,6 @@
 
                                 <!-- Progress Bar -->
                                 {% if goal.target %}
-                                    {% set completions = goal.completions|length %}
                                     {% set progress_count = 0 %}
                                     {% for comp in goal.completions %}
                                         {% if comp.week_key == current_week %}

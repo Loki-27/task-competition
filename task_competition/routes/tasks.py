@@ -270,13 +270,29 @@ def stop_timer(task_id):
     data = request.json or {}
     elapsed_seconds = data.get('elapsed_seconds', 0)
     
+    from datetime import datetime
+    
+    # Helper functions
+    def get_week_key(date=None):
+        """Get ISO week key (YYYY-Www)."""
+        if date is None:
+            date = datetime.utcnow()
+        return f"{date.year}-W{date.isocalendar()[1]:02d}"
+    
+    def get_month_key(date=None):
+        """Get month key (YYYY-MM)."""
+        if date is None:
+            date = datetime.utcnow()
+        return date.strftime("%Y-%m")
+    
     # Create completion record with elapsed time
-    today = datetime.utcnow().date()
     completion = TaskCompletion(
         user_id=current_user.id,
         task_id=task_id,
         completed_at=datetime.utcnow(),
-        elapsed_seconds=elapsed_seconds
+        elapsed_seconds=elapsed_seconds,
+        week_key=get_week_key() if task.category == 'weekly' else None,
+        month_key=get_month_key() if task.category == 'monthly' else None
     )
     
     db.session.add(completion)

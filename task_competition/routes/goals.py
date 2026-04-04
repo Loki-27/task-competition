@@ -256,7 +256,9 @@ def complete_goal(goal_id):
         user_id=current_user.id,
         task_id=goal_id,
         progress_count=goal.target if goal.target > 0 else 1,
-        completion_type='full'
+        completion_type='full',
+        week_key=get_week_key() if goal.category == 'weekly' else None,
+        month_key=get_month_key() if goal.category == 'monthly' else None
     )
     
     db.session.add(completion)
@@ -284,11 +286,18 @@ def update_progress(goal_id):
     
     increment = request.json.get('increment', 1)
     
-    # Get or create completion for today
-    today = datetime.utcnow().strftime("%Y-%m-%d")
+    # Get or create completion for this week/month
+    if goal.category == 'weekly':
+        key_filter = {'week_key': get_week_key()}
+    elif goal.category == 'monthly':
+        key_filter = {'month_key': get_month_key()}
+    else:
+        key_filter = {}
+    
     completion = TaskCompletion.query.filter_by(
         user_id=current_user.id,
-        task_id=goal_id
+        task_id=goal_id,
+        **key_filter
     ).first()
     
     if not completion:
@@ -296,7 +305,9 @@ def update_progress(goal_id):
             user_id=current_user.id,
             task_id=goal_id,
             progress_count=increment,
-            completion_type='partial'
+            completion_type='partial',
+            week_key=get_week_key() if goal.category == 'weekly' else None,
+            month_key=get_month_key() if goal.category == 'monthly' else None
         )
         db.session.add(completion)
     else:
@@ -306,7 +317,7 @@ def update_progress(goal_id):
     if goal.target > 0 and completion.progress_count >= goal.target:
         completion.completion_type = 'full'
         # Only award points once when goal is completed
-        if completion.completion_type != 'full':
+        if completion.completion_type != 'full':  # Only add if wasn't already full
             current_user.total_points += goal.points
     
     db.session.commit()

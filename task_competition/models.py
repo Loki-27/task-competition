@@ -101,6 +101,8 @@ class TaskCompletion(db.Model):
     progress_count = db.Column(db.Integer, default=0)  # For goals with targets (e.g., 3 out of 7)
     elapsed_seconds = db.Column(db.Integer, default=0)  # Time spent on timed tasks
     completion_type = db.Column(db.String(20), default='full')  # 'full' or 'partial'
+    week_key = db.Column(db.String(10))  # ISO week key (YYYY-Www) for weekly goal tracking
+    month_key = db.Column(db.String(7))  # Month key (YYYY-MM) for monthly goal tracking
     
     __table_args__ = (
         db.UniqueConstraint('user_id', 'task_id', 'completed_at', name='unique_daily_completion'),
